@@ -54,6 +54,14 @@ test('classifyMapPixel distinguishes Red Line, green islands, desert, and ocean'
   assert.ok(island.height > 0.3);
   assert.equal(island.oceanMask, 0);
 
+  const blueReferenceContinent = classifyMapPixel(172, 137, 82);
+  assert.equal(blueReferenceContinent.terrain, 'desert');
+  assert.equal(blueReferenceContinent.oceanMask, 0);
+
+  const neutralReferenceContinent = classifyMapPixel(126, 116, 101);
+  assert.equal(neutralReferenceContinent.terrain, 'land');
+  assert.equal(neutralReferenceContinent.oceanMask, 0);
+
   const alabasta = classifyMapPixel(198, 165, 85);
   assert.equal(alabasta.terrain, 'desert');
   assert.equal(alabasta.oceanMask, 0);

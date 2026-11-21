@@ -338,22 +338,25 @@ function processWorldMapCore(
     }
   }
 
-  // Clean 1px coastline outline specks from landRaw
+  // Keep the coastline mask binary so the CPU collision edge is the same edge the terrain reveals.
   const landClean = new Float32Array(total);
   for (let y = 1; y < gridHeight - 1; y++) {
     const row = y * gridWidth;
     for (let x = 0; x < gridWidth; x++) {
       const idx = row + x;
       const isLandOrSnow = landRaw[idx] > 0.5 || snowRestored[idx] > 0.5;
-      if (isLandOrSnow && countNeighbors(landRaw, x, y) + countNeighbors(snowRestored, x, y) >= 2) {
+      if (
+        isLandOrSnow &&
+        countNeighbors(landRaw, x, y) + countNeighbors(snowRestored, x, y) >= 2
+      ) {
         landClean[idx] = 1;
       }
     }
   }
 
-  // Dilate Red Line 4 passes to completely seal "RED LINE" lettering, while keeping Reverse Mountain canals carved!
+  // One-pixel closing removes JPEG pinholes without moving the visible Red Line coast by several pixels.
   let redClosed = new Float32Array(redRaw);
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 1; pass++) {
     const next = new Float32Array(total);
     for (let y = 0; y < gridHeight; y++) {
       const row = y * gridWidth;
@@ -411,11 +414,10 @@ function processWorldMapCore(
     return out;
   };
 
-  const smoothRed = gaussianBlur(redClosed, 3);
-  const smoothLand = gaussianBlur(landClean, 3);
-  const smoothDesert = gaussianBlur(desertRaw, 2);
-  const smoothSnow = gaussianBlur(snowRestored, 2);
-  const smoothCalm = gaussianBlur(calmRaw, 4);
+  const smoothRed = gaussianBlur(redClosed, 1);
+  const smoothDesert = gaussianBlur(desertRaw, 1);
+  const smoothSnow = gaussianBlur(snowRestored, 1);
+  const smoothCalm = gaussianBlur(calmRaw, 3);
   const smoothCanal = gaussianBlur(canalMask, 1);
 
   // Coastal proximity halo (blurred union of land + redline for turquoise shallow reefs)
@@ -434,13 +436,15 @@ function processWorldMapCore(
       const u = x / gridWidth;
       const idx = row + x;
 
-      const rW = smoothRed[idx];
-      const lW = smoothLand[idx];
-      if (rW < 0.002 && lW < 0.002) {
+      // Height uses the closed binary coastline, not its blurred presentation weights.
+      // This prevents sub-threshold tails in the ocean from becoming invisible hull walls.
+      const rW = redClosed[idx] > 0.5 && canalMask[idx] < 0.5 ? 1 : 0;
+      const lW = landClean[idx];
+      if (rW === 0 && lW === 0) {
         heightGrid[idx] = 0;
         continue;
       }
-      const cW = smoothCanal[idx];
+      const cW = canalMask[idx];
 
       // Multi-octave ridged multifractal mountain peaks
       const ridgeMajor = ridgedFbm2D(u * 44, v * 22, 4);

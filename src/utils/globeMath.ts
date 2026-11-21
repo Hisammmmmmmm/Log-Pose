@@ -218,14 +218,24 @@ export function classifyMapPixel(
     };
   }
 
-  // 2. Desert / sandy islands (Alabasta, sandy coastlines)
+  // 2. Snow / bright white land (Drum Island, Skypiea, Whiteland)
+  if (r >= 188 && g >= 188 && b >= 178 && Math.abs(r - b) < 40) {
+    return {
+      terrain: 'snow',
+      height: 0.55,
+      oceanMask: 0,
+    };
+  }
+
+  // 3. Sand, clay and ochre continental land from the reference Blues maps.
   if (
-    r >= 130 &&
-    g >= 95 &&
-    b <= 115 &&
-    r - b >= 42 &&
+    r >= 118 &&
+    g >= 82 &&
+    b <= 132 &&
+    r - b >= 30 &&
+    g - b >= 8 &&
     r >= g * 0.92 &&
-    r <= g * 1.6
+    r <= g * 1.75
   ) {
     return {
       terrain: 'desert',
@@ -234,20 +244,18 @@ export function classifyMapPixel(
     };
   }
 
-  // 3. Green landmass (islands in the Blues, Paradise, New World)
-  if (g >= 65 && g - b >= 18 && r - b >= 6 && b < 135) {
+  // 4. Green and neutral landmasses (islands and giant continental shelves).
+  const greenLand = g >= 65 && g - b >= 18 && r - b >= 6 && b < 135;
+  const neutralLand =
+    r >= 92 &&
+    g >= 72 &&
+    b <= 150 &&
+    r - b >= 12 &&
+    g - b >= 2;
+  if (greenLand || neutralLand) {
     return {
       terrain: 'land',
       height: 0.42,
-      oceanMask: 0,
-    };
-  }
-
-  // 4. Snow / bright white clouds (Drum Island, Skypiea, Whiteland)
-  if (r >= 188 && g >= 188 && b >= 178 && Math.abs(r - b) < 40) {
-    return {
-      terrain: 'snow',
-      height: 0.55,
       oceanMask: 0,
     };
   }
