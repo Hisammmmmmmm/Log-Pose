@@ -1,0 +1,8 @@
+{
+  "name": "Remix 19 Grand Line 3D World Atlas",
+  "description": "Interactive 3D globe of the One Piece world with procedural terrain relief, dynamic ocean shaders, weather systems, and navigable island lore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
